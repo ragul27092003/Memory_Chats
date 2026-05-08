@@ -1,0 +1,24 @@
+{
+  "short_name": "Memory Chats",
+  "name": "Memory Chats",
+  "description": "Relive your exported WhatsApp conversations. Everything stays on your device, always private.",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#111b21",
+  "background_color": "#111b21",
+  "categories": ["utilities", "productivity"]
+}
