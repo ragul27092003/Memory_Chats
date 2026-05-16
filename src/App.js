@@ -5,7 +5,7 @@ import SenderSetup from './components/SenderSetup';
 import { parseWhatsAppChat, detectParticipants } from './utils/parser';
 import { useChatStorage } from './hooks/useChatStorage';
 
-// Media blobs are NOT stored in sessionStorage (too large) — they're re-created
+// Media blobs are NOT stored in sessionStorage (too large) â€” they're re-created
 // when the file is loaded. On reload, user re-picks file but messages are cached.
 let sessionMediaMap = {};
 
@@ -93,7 +93,7 @@ export default function App() {
         Memory Chats
       </span>
       <span style={{ color: '#8696a0', fontSize: 11 }}>
-        100% private • stays on your device
+        100% private â€¢ stays on your device
       </span>
     </div>
   );
@@ -108,6 +108,30 @@ export default function App() {
         mediaMap={mediaMap}
         onReset={handleReset}
         onChangeMe={handleChangeMe}
+      />
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#111b21' }}>
+      {topbar}
+
+      {phase === 'setup' && pendingData && (
+        <SenderSetup
+          participants={pendingData.participants}
+          msgCounts={pendingData.msgCounts}
+          onConfirm={handleSenderConfirm}
+        />
+      )}
+
+      <DropZone
+        onFileParsed={handleFileParsed}
+        error={error}
+        setError={setError}
+      />
+    </div>
+  );
+}        onChangeMe={handleChangeMe}
       />
     );
   }
