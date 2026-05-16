@@ -5,18 +5,21 @@ import SenderSetup from './components/SenderSetup';
 import { parseWhatsAppChat, detectParticipants } from './utils/parser';
 import { useChatStorage } from './hooks/useChatStorage';
 
-// Media blobs are NOT stored in sessionStorage (too large) â€” they're re-created
-// when the file is loaded. On reload, user re-picks file but messages are cached.
+// Media blobs live in memory only (too large for sessionStorage).
+// If the user refreshes, messages are restored from sessionStorage
+// but they'll need to re-pick the file to restore media.
 let sessionMediaMap = {};
 
 export default function App() {
   const { chatData, saveChat, clearChatData } = useChatStorage();
-  const [phase, setPhase] = useState(() => chatData ? 'chat' : 'upload');
-  const [error, setError] = useState('');
-  const [pendingData, setPendingData] = useState(null);
-  const [mediaMap, setMediaMap] = useState(sessionMediaMap);
 
-  // Called when user picks a file
+  // phase: 'upload' | 'setup' | 'chat'
+  const [phase, setPhase]           = useState(() => chatData ? 'chat' : 'upload');
+  const [error, setError]           = useState('');
+  const [pendingData, setPendingData] = useState(null);
+  const [mediaMap, setMediaMap]     = useState(sessionMediaMap);
+
+  // ── Step 1: File parsed from DropZone ────────────────────────────────────
   const handleFileParsed = useCallback((txt, newMediaMap, fileName) => {
     const msgs = parseWhatsAppChat(txt);
     if (!msgs.length) {
@@ -30,37 +33,44 @@ export default function App() {
       return;
     }
 
+    // Store media blobs in module-level variable (survives phase changes)
     sessionMediaMap = newMediaMap;
     setMediaMap(newMediaMap);
 
-    const chatName = fileName.replace(/\.(zip|txt)$/i, '').replace(/^WhatsApp Chat with\s*/i, '');
-    const msgCounts = {};
-    participants.forEach(p => { msgCounts[p] = msgs.filter(m => m.sender === p).length; });
+    // Strip "WhatsApp Chat with" prefix from filename if present
+    const chatName = fileName
+      .replace(/\.(zip|txt)$/i, '')
+      .replace(/^WhatsApp Chat with\s*/i, '')
+      .trim();
 
-    // Always show sender selection so user can confirm who is "me"
+    const msgCounts = {};
+    participants.forEach(p => {
+      msgCounts[p] = msgs.filter(m => m.sender === p).length;
+    });
+
     setPendingData({ msgs, participants, chatName, msgCounts });
     setPhase('setup');
   }, []);
 
-  // User confirmed who they are
+  // ── Step 2: User picks which sender is "me" ───────────────────────────────
   const handleSenderConfirm = useCallback((myName) => {
     const { msgs, participants, chatName } = pendingData;
-    const data = { msgs, myName, participants, chatName };
-    saveChat(data);
-    setPhase('chat');
+    saveChat({ msgs, myName, participants, chatName });
     setPendingData(null);
+    setPhase('chat');
   }, [pendingData, saveChat]);
 
-  // Reset to upload phase
+  // ── Reset: go back to upload screen ──────────────────────────────────────
   const handleReset = useCallback(() => {
     clearChatData();
     sessionMediaMap = {};
     setMediaMap({});
+    setPendingData(null);
     setPhase('upload');
     setError('');
   }, [clearChatData]);
 
-  // Change "me" without re-uploading
+  // ── Change "me" without re-uploading the file ─────────────────────────────
   const handleChangeMe = useCallback(() => {
     if (!chatData) return;
     const msgCounts = {};
@@ -76,6 +86,7 @@ export default function App() {
     setPhase('setup');
   }, [chatData]);
 
+  // ── Top bar (shown on upload + setup screens) ─────────────────────────────
   const topbar = (
     <div style={{
       background: '#202c33',
@@ -93,11 +104,12 @@ export default function App() {
         Memory Chats
       </span>
       <span style={{ color: '#8696a0', fontSize: 11 }}>
-        100% private â€¢ stays on your device
+        100% private · stays on your device
       </span>
     </div>
   );
 
+  // ── Chat view (full screen, no topbar) ────────────────────────────────────
   if (phase === 'chat' && chatData) {
     return (
       <ChatView
@@ -112,10 +124,18 @@ export default function App() {
     );
   }
 
+  // ── Upload / Setup screens ────────────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#111b21' }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      overflow: 'hidden',
+      background: '#111b21',
+    }}>
       {topbar}
 
+      {/* Sender selection overlay */}
       {phase === 'setup' && pendingData && (
         <SenderSetup
           participants={pendingData.participants}
@@ -124,30 +144,7 @@ export default function App() {
         />
       )}
 
-      <DropZone
-        onFileParsed={handleFileParsed}
-        error={error}
-        setError={setError}
-      />
-    </div>
-  );
-}        onChangeMe={handleChangeMe}
-      />
-    );
-  }
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#111b21' }}>
-      {topbar}
-
-      {phase === 'setup' && pendingData && (
-        <SenderSetup
-          participants={pendingData.participants}
-          msgCounts={pendingData.msgCounts}
-          onConfirm={handleSenderConfirm}
-        />
-      )}
-
+      {/* Always render DropZone underneath so it's ready */}
       <DropZone
         onFileParsed={handleFileParsed}
         error={error}
