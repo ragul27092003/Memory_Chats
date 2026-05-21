@@ -193,7 +193,7 @@ function EmojiSection({ msgs, myName, participants, theme }) {
   const stats = useMemo(() => buildEmojiStats(msgs, participants), [msgs, participants]);
   const [tab, setTab] = useState('overall');
   const otherName = participants.find(p => p !== myName) || '';
-  const tabs = [['overall','Overall'], [myName, myName.split(' ')[0]], ...(otherName?[[otherName, otherName.split(' ')[0]]]:[])]
+  const tabs = [['overall','Overall'], [myName, myName.split(' ')[0]], ...(otherName?[[otherName, otherName.split(' ')[0]]]:[])];
 
   const entries = tab === 'overall' ? stats.overall : (stats.byPerson[tab] || []);
   const max = entries[0]?.[1] || 1;
@@ -444,7 +444,7 @@ export default function AnalyticsPanel({ msgs, filteredMsgs, myName, participant
           ))}
         </div>
 
-        {/* Content */}
+        Content
         <div style={{ padding: 16, flex: 1 }}>
           <div style={{ color: theme.text, fontWeight: 700, fontSize: 14, marginBottom: 14 }}>
             {cur?.icon} {cur?.label}

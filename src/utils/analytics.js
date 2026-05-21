@@ -1,4 +1,4 @@
-// â”€â”€ Analytics helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Analytics helpers ──────────────────────────────────────────────────────────
 
 const STOP_WORDS = new Set([
   'the','a','an','and','or','but','in','on','at','to','for','of','with',
@@ -13,7 +13,7 @@ const STOP_WORDS = new Set([
   'like','get','got','got','go','going','come','back','know','think',
   'want','see','look','tell','said','say','time','day','one','two',
   'im','ill','ive','its','dont','cant','wont','isnt','wasnt','didnt',
-  'https','http','www','com','null','omitted','media','image','video',
+  'https','http','www','null','omitted','media','image','video',
 ]);
 
 function parseDate(d) {
@@ -24,7 +24,7 @@ function parseDate(d) {
   return new Date(yr, mon - 1, day);
 }
 
-// â”€â”€ Date range filter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Date range filter ──────────────────────────────────────────────────────────
 export function filterByDateRange(msgs, fromDate, toDate) {
   if (!fromDate && !toDate) return msgs;
   return msgs.filter(m => {
@@ -38,7 +38,7 @@ export function filterByDateRange(msgs, fromDate, toDate) {
   });
 }
 
-// â”€â”€ Activity heatmap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Activity heatmap ───────────────────────────────────────────────────────────
 export function buildHeatmap(msgs) {
   // returns { date: count } for all dates with messages
   const map = {};
@@ -49,7 +49,7 @@ export function buildHeatmap(msgs) {
   return map;
 }
 
-// â”€â”€ Hourly activity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Hourly activity ───────────────────────────────────────────────────────────
 export function buildHourlyActivity(msgs, myName) {
   const mine = new Array(24).fill(0);
   const theirs = new Array(24).fill(0);
@@ -63,7 +63,7 @@ export function buildHourlyActivity(msgs, myName) {
   return { mine, theirs };
 }
 
-// â”€â”€ Word frequency â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Word frequency ────────────────────────────────────────────────────────────
 export function buildWordFreq(msgs, sender, topN = 40) {
   const freq = {};
   msgs.forEach(m => {
@@ -82,7 +82,7 @@ export function buildWordFreq(msgs, sender, topN = 40) {
     .slice(0, topN);
 }
 
-// â”€â”€ Reply gap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Reply gap ──────────────────────────────────────────────────────────────────
 function toMinutes(date, time) {
   try {
     const d = parseDate(date);
@@ -92,7 +92,9 @@ function toMinutes(date, time) {
     let hr = parseInt(h);
     if (/pm/i.test(time) && hr !== 12) hr += 12;
     if (/am/i.test(time) && hr === 12) hr = 0;
-    return d.getTime() / 60000 + hr * 60 + m;
+    // BUG FIX: Set the date's time to the correct hour and minute, then return in minutes
+    d.setHours(hr, m, 0, 0);
+    return d.getTime() / 60000;
   } catch { return null; }
 }
 
@@ -126,7 +128,7 @@ export function buildReplyGaps(msgs, myName) {
   };
 }
 
-// â”€â”€ Emoji stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Emoji stats ────────────────────────────────────────────────────────────────
 const EMOJI_RE = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
 
 export function buildEmojiStats(msgs, participants) {
@@ -154,7 +156,7 @@ export function buildEmojiStats(msgs, participants) {
   };
 }
 
-// â”€â”€ On This Day â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── On This Day ────────────────────────────────────────────────────────────────
 export function getOnThisDay(msgs) {
   const today = new Date();
   const todayMon = today.getMonth() + 1;
@@ -176,14 +178,15 @@ export function getOnThisDay(msgs) {
     } catch {}
   });
 
+  // BUG FIX: Parse year as integer for proper numeric sorting
   Object.entries(byYear)
-    .sort((a, b) => a[0] - b[0])
+    .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
     .forEach(([yr, ms]) => results.push({ year: yr, msgs: ms }));
 
   return results;
 }
 
-// â”€â”€ Message volume over time â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Message volume over time ──────────────────────────────────────────────────
 export function buildVolumeOverTime(msgs, granularity = 'month') {
   const map = {};
   msgs.forEach(m => {
@@ -201,7 +204,7 @@ export function buildVolumeOverTime(msgs, granularity = 'month') {
   return Object.entries(map).sort((a, b) => a[0].localeCompare(b[0]));
 }
 
-// â”€â”€ Bookmarks (sessionStorage) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Bookmarks (sessionStorage) ─────────────────────────────────────────────────
 const BM_KEY = 'wa_bookmarks';
 export function getBookmarks() {
   try { return JSON.parse(sessionStorage.getItem(BM_KEY) || '[]'); } catch { return []; }
